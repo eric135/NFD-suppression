@@ -49,6 +49,7 @@ GenericLinkService::GenericLinkService(const GenericLinkService::Options& option
   , m_lastSeqNo(-2)
   , m_nextMarkTime(time::steady_clock::TimePoint::max())
   , m_nMarkedSinceInMarkingState(0)
+  , m_gen(m_rd())
 {
   m_reassembler.beforeTimeout.connect([this] (auto...) { ++this->nReassemblyTimeouts; });
   m_reliability.onDroppedInterest.connect([this] (const auto& i) { this->notifyDroppedInterest(i); });
@@ -107,6 +108,14 @@ GenericLinkService::doSendInterest(const Interest& interest, const EndpointId& e
 void
 GenericLinkService::doSendData(const Data& data, const EndpointId& endpointId)
 {
+  if (m_options.useProbabilisiticDataSuppression) {
+    std::uniform_real_distribution<double> dis(0.0, 1.0);
+    if (dis(m_gen) < m_options.dataSuppressionProbability) {
+      NFD_LOG_FACE_DEBUG("Probabilistically dropping Data packet " << data.getName());
+      return;
+    }
+  }
+
   if (m_options.useRandomBackoffDataSuppression &&
       getTransport()->getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS) {
     // Back off for a random period of time

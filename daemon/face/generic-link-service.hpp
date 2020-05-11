@@ -31,6 +31,8 @@
 #include "lp-reassembler.hpp"
 #include "lp-reliability.hpp"
 
+#include <random>
+
 namespace nfd {
 namespace face {
 
@@ -159,6 +161,14 @@ public:
     /** \brief interval for multi-access Data suppression random backoff timer
      */
     std::pair<time::milliseconds, time::milliseconds> dataSuppressionInterval = {1_ms, 5_ms};
+
+    /** \brief enables probabilistic Data suppression
+     */
+    bool useProbabilisiticDataSuppression = false;
+
+    /** \brief probability of dropping a Data packet when probabilistic Data suppression is enabled
+     */
+    double dataSuppressionProbability = 0.25;
   };
 
   /** \brief counters provided by GenericLinkService
@@ -313,6 +323,8 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   size_t m_nMarkedSinceInMarkingState;
   /// Contains packets delayed due to multiaccess link Data suppression
   std::map<Name, std::tuple<scheduler::ScopedEventId, Data, EndpointId>> m_delayedDataPackets;
+  std::random_device m_rd;
+  std::mt19937 m_gen;
 
   friend class LpReliability;
 };
