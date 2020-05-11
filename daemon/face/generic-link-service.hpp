@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019,  Regents of the University of California,
+ * Copyright (c) 2014-2020,  Regents of the University of California,
  *                           Arizona Board of Regents,
  *                           Colorado State University,
  *                           University Pierre & Marie Curie, Sorbonne University,
@@ -151,6 +151,14 @@ public:
     /** \brief enables self-learning forwarding support
      */
     bool allowSelfLearning = true;
+
+    /** \brief enables random backoff-based multi-access Data suppression
+     */
+    bool useRandomBackoffDataSuppression = false;
+
+    /** \brief interval for multi-access Data suppression random backoff timer
+     */
+    std::pair<time::milliseconds, time::milliseconds> dataSuppressionInterval = {1_ms, 5_ms};
   };
 
   /** \brief counters provided by GenericLinkService
@@ -232,6 +240,9 @@ private: // send path
   void
   checkCongestionLevel(lp::Packet& pkt);
 
+  void
+  sendDelayedData(const Name& name);
+
 private: // receive path
   /** \brief receive Packet from Transport
    */
@@ -300,6 +311,8 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   time::steady_clock::TimePoint m_nextMarkTime;
   /// number of marked packets in the current incident of congestion
   size_t m_nMarkedSinceInMarkingState;
+  /// Contains packets delayed due to multiaccess link Data suppression
+  std::map<Name, std::tuple<scheduler::ScopedEventId, Data, EndpointId>> m_delayedDataPackets;
 
   friend class LpReliability;
 };

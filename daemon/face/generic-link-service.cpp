@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019,  Regents of the University of California,
+ * Copyright (c) 2014-2020,  Regents of the University of California,
  *                           Arizona Board of Regents,
  *                           Colorado State University,
  *                           University Pierre & Marie Curie, Sorbonne University,
@@ -24,9 +24,11 @@
  */
 
 #include "generic-link-service.hpp"
+#include "daemon/common/global.hpp"
 
 #include <ndn-cxx/lp/pit-token.hpp>
 #include <ndn-cxx/lp/tags.hpp>
+#include <ndn-cxx/util/random.hpp>
 
 #include <cmath>
 
@@ -105,6 +107,25 @@ GenericLinkService::doSendInterest(const Interest& interest, const EndpointId& e
 void
 GenericLinkService::doSendData(const Data& data, const EndpointId& endpointId)
 {
+  if (m_options.useRandomBackoffDataSuppression &&
+      getTransport()->getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS) {
+    // Back off for a random period of time
+    time::milliseconds backoffTime = time::milliseconds(
+      (ndn::random::generateWord32() %
+       (m_options.dataSuppressionInterval.second - m_options.dataSuppressionInterval.first).count()) +
+      m_options.dataSuppressionInterval.first.count());
+    m_delayedDataPackets.emplace(std::piecewise_construct,
+                                 std::forward_as_tuple(data.getName()),
+                                 std::forward_as_tuple(
+                                   getScheduler().schedule(backoffTime,
+                                                           std::bind(&GenericLinkService::sendDelayedData,
+                                                           this, data.getName())),
+                                   data,
+                                   endpointId));
+    NFD_LOG_FACE_DEBUG("Delaying Data packet " << data.getName() << " by " << backoffTime << " ms");
+    return;
+  }
+
   lp::Packet lpPacket(data.wireEncode());
 
   encodeLpFields(data, lpPacket);
@@ -268,6 +289,23 @@ GenericLinkService::checkCongestionLevel(lp::Packet& pkt)
     m_nextMarkTime = time::steady_clock::TimePoint::max();
     m_nMarkedSinceInMarkingState = 0;
   }
+}
+
+void
+GenericLinkService::sendDelayedData(const Name& name)
+{
+  BOOST_ASSERT(m_delayedDataPackets.count(name) > 0);
+
+  NFD_LOG_FACE_DEBUG("Sending delayed Data packet " << name);
+
+  // Extract and send Data packet
+  const auto& dataIt = m_delayedDataPackets.find(name);
+  lp::Packet lpPacket(std::get<1>(dataIt->second).wireEncode());
+  encodeLpFields(std::get<1>(dataIt->second), lpPacket);
+  this->sendNetPacket(std::move(lpPacket), std::get<2>(dataIt->second), false);
+
+  // Erase delayed Data packet locally
+  m_delayedDataPackets.erase(dataIt);
 }
 
 void
@@ -439,6 +477,13 @@ GenericLinkService::decodeData(const Block& netPkt, const lp::Packet& firstPkt,
     else {
       NFD_LOG_FACE_WARN("received PrefixAnnouncement, but self-learning disabled: IGNORE");
     }
+  }
+
+  // Cancel any matching delayed Data packets
+  if (m_delayedDataPackets.count(data->getName()) > 0) {
+    NFD_LOG_FACE_DEBUG("Cancelling delayed Data packet " << data->getName() <<
+                       " due to receipt of matching Data before timeout");
+    m_delayedDataPackets.erase(data->getName());
   }
 
   this->receiveData(*data, endpointId);
