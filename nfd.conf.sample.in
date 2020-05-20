@@ -85,6 +85,9 @@ face_system
   general
   {
     enable_congestion_marking yes ; set to 'no' to disable congestion marking on supported faces, default 'yes'
+    backoff_data_suppression no
+    prob_data_suppression no
+    interest_suppression no
   }
 
   ; The unix section contains settings for Unix stream faces and channels.

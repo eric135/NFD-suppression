@@ -108,7 +108,7 @@ GenericLinkService::doSendInterest(const Interest& interest, const EndpointId& e
 void
 GenericLinkService::doSendData(const Data& data, const EndpointId& endpointId)
 {
-  if (m_options.useProbabilisiticDataSuppression) {
+  if (m_options.useProbabilisticDataSuppression) {
     std::uniform_real_distribution<double> dis(0.0, 1.0);
     if (dis(m_gen) < m_options.dataSuppressionProbability) {
       NFD_LOG_FACE_DEBUG("Probabilistically dropping Data packet " << data.getName());

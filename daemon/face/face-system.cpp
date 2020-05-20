@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019,  Regents of the University of California,
+ * Copyright (c) 2014-2020,  Regents of the University of California,
  *                           Arizona Board of Regents,
  *                           Colorado State University,
  *                           University Pierre & Marie Curie, Sorbonne University,
@@ -110,6 +110,15 @@ FaceSystem::processConfig(const ConfigSection& configSection, bool isDryRun, con
       const std::string& key = pair.first;
       if (key == "enable_congestion_marking") {
         context.generalConfig.wantCongestionMarking = ConfigFile::parseYesNo(pair, CFGSEC_GENERAL_FQ);
+      }
+      else if (key == "backoff_data_suppression") {
+        context.generalConfig.wantRandomBackoffDataSuppression = ConfigFile::parseYesNo(pair, CFGSEC_GENERAL_FQ);
+      }
+      else if (key == "prob_data_suppression") {
+        context.generalConfig.wantProbabilisticDataSuppression = ConfigFile::parseYesNo(pair, CFGSEC_GENERAL_FQ);
+      }
+      else if (key == "interest_suppression") {
+        context.generalConfig.wantInterestSuppression = ConfigFile::parseYesNo(pair, CFGSEC_GENERAL_FQ);
       }
       else {
         NDN_THROW(ConfigFile::Error("Unrecognized option " + CFGSEC_GENERAL_FQ + "." + key));

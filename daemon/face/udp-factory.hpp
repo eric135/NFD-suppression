@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018,  Regents of the University of California,
+ * Copyright (c) 2014-2020,  Regents of the University of California,
  *                           Arizona Board of Regents,
  *                           Colorado State University,
  *                           University Pierre & Marie Curie, Sorbonne University,
@@ -131,6 +131,9 @@ private:
     udp::Endpoint group = udp::getDefaultMulticastGroup();
     udp::Endpoint groupV6 = udp::getDefaultMulticastGroupV6();
     ndn::nfd::LinkType linkType = ndn::nfd::LINK_TYPE_MULTI_ACCESS;
+    bool wantRandomBackoffDataSuppression = false;
+    bool wantProbabilisticDataSuppression = false;
+    bool wantInterestSuppression = false;
     NetworkInterfacePredicate netifPredicate;
   };
   MulticastConfig m_mcastConfig;

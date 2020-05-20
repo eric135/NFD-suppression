@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019,  Regents of the University of California,
+ * Copyright (c) 2014-2020,  Regents of the University of California,
  *                           Arizona Board of Regents,
  *                           Colorado State University,
  *                           University Pierre & Marie Curie, Sorbonne University,
@@ -74,6 +74,9 @@ EthernetFactory::doProcessConfig(OptionalConfigSection configSection,
 
   UnicastConfig unicastConfig;
   MulticastConfig mcastConfig;
+  mcastConfig.wantRandomBackoffDataSuppression = context.generalConfig.wantRandomBackoffDataSuppression;
+  mcastConfig.wantProbabilisticDataSuppression = context.generalConfig.wantProbabilisticDataSuppression;
+  mcastConfig.wantInterestSuppression = context.generalConfig.wantInterestSuppression;
 
   if (configSection) {
     // listen and mcast default to 'yes' but only if face_system.ether section is present
@@ -249,6 +252,9 @@ EthernetFactory::createMulticastFace(const ndn::net::NetworkInterface& netif,
   GenericLinkService::Options opts;
   opts.allowFragmentation = true;
   opts.allowReassembly = true;
+  opts.useRandomBackoffDataSuppression = m_mcastConfig.wantRandomBackoffDataSuppression;
+  opts.useProbabilisticDataSuppression = m_mcastConfig.wantProbabilisticDataSuppression;
+  opts.useInterestSuppression = m_mcastConfig.wantInterestSuppression;
 
   auto linkService = make_unique<GenericLinkService>(opts);
   auto transport = make_unique<MulticastEthernetTransport>(netif, address, m_mcastConfig.linkType);

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019,  Regents of the University of California,
+ * Copyright (c) 2014-2020,  Regents of the University of California,
  *                           Arizona Board of Regents,
  *                           Colorado State University,
  *                           University Pierre & Marie Curie, Sorbonne University,
@@ -89,6 +89,9 @@ UdpFactory::doProcessConfig(OptionalConfigSection configSection,
   bool enableV6 = false;
   uint32_t idleTimeout = 600;
   MulticastConfig mcastConfig;
+  mcastConfig.wantRandomBackoffDataSuppression = context.generalConfig.wantRandomBackoffDataSuppression;
+  mcastConfig.wantProbabilisticDataSuppression = context.generalConfig.wantProbabilisticDataSuppression;
+  mcastConfig.wantInterestSuppression = context.generalConfig.wantInterestSuppression;
 
   if (configSection) {
     // These default to 'yes' but only if face_system.udp section is present
@@ -354,6 +357,9 @@ UdpFactory::createMulticastFace(const shared_ptr<const net::NetworkInterface>& n
 
   GenericLinkService::Options options;
   options.allowCongestionMarking = m_wantCongestionMarking;
+  options.useRandomBackoffDataSuppression = m_mcastConfig.wantRandomBackoffDataSuppression;
+  options.useProbabilisticDataSuppression = m_mcastConfig.wantProbabilisticDataSuppression;
+  options.useInterestSuppression = m_mcastConfig.wantInterestSuppression;
   auto linkService = make_unique<GenericLinkService>(options);
   auto transport = make_unique<MulticastUdpTransport>(mcastEp, std::move(rxSock), std::move(txSock),
                                                       m_mcastConfig.linkType);

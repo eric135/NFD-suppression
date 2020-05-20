@@ -164,11 +164,15 @@ public:
 
     /** \brief enables probabilistic Data suppression
      */
-    bool useProbabilisiticDataSuppression = false;
+    bool useProbabilisticDataSuppression = false;
 
     /** \brief probability of dropping a Data packet when probabilistic Data suppression is enabled
      */
     double dataSuppressionProbability = 0.25;
+
+    /** \brief enables Interest suppression
+     */
+    bool useInterestSuppression = false;
   };
 
   /** \brief counters provided by GenericLinkService
