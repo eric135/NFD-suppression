@@ -90,10 +90,11 @@ UdpFactory::doProcessConfig(OptionalConfigSection configSection,
   uint32_t idleTimeout = 600;
   MulticastConfig mcastConfig;
   mcastConfig.wantRandomBackoffDataSuppression = context.generalConfig.wantRandomBackoffDataSuppression;
-  mcastConfig.wantProbabilisticDataSuppression = context.generalConfig.wantProbabilisticDataSuppression;
-  mcastConfig.wantInterestSuppression = context.generalConfig.wantInterestSuppression;
   mcastConfig.backoffIntervalBegin = context.generalConfig.dataSuppressionIntervalBegin;
   mcastConfig.backoffIntervalEnd = context.generalConfig.dataSuppressionIntervalEnd;
+  mcastConfig.wantProbabilisticDataSuppression = context.generalConfig.wantProbabilisticDataSuppression;
+  mcastConfig.dataDropProbability = context.generalConfig.dataDropProbability;
+  mcastConfig.wantInterestSuppression = context.generalConfig.wantInterestSuppression;
 
   if (configSection) {
     // These default to 'yes' but only if face_system.udp section is present
@@ -360,9 +361,10 @@ UdpFactory::createMulticastFace(const shared_ptr<const net::NetworkInterface>& n
   GenericLinkService::Options options;
   options.allowCongestionMarking = m_wantCongestionMarking;
   options.useRandomBackoffDataSuppression = m_mcastConfig.wantRandomBackoffDataSuppression;
-  options.useProbabilisticDataSuppression = m_mcastConfig.wantProbabilisticDataSuppression;
-  options.useInterestSuppression = m_mcastConfig.wantInterestSuppression;
   options.dataSuppressionInterval = {m_mcastConfig.backoffIntervalBegin, m_mcastConfig.backoffIntervalEnd};
+  options.useProbabilisticDataSuppression = m_mcastConfig.wantProbabilisticDataSuppression;
+  options.dataSuppressionProbability = m_mcastConfig.dataDropProbability;
+  options.useInterestSuppression = m_mcastConfig.wantInterestSuppression;
   auto linkService = make_unique<GenericLinkService>(options);
   auto transport = make_unique<MulticastUdpTransport>(mcastEp, std::move(rxSock), std::move(txSock),
                                                       m_mcastConfig.linkType);

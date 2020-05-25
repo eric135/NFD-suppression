@@ -128,6 +128,9 @@ FaceSystem::processConfig(const ConfigSection& configSection, bool isDryRun, con
         context.generalConfig.dataSuppressionIntervalEnd =
           time::milliseconds(ConfigFile::parseNumber<uint32_t>(pair, CFGSEC_GENERAL_FQ));
       }
+      else if (key == "prob_drop_probability") {
+        context.generalConfig.dataDropProbability = ConfigFile::parseNumber<double>(pair, CFGSEC_GENERAL_FQ);
+      }
       else {
         NDN_THROW(ConfigFile::Error("Unrecognized option " + CFGSEC_GENERAL_FQ + "." + key));
       }

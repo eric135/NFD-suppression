@@ -93,6 +93,7 @@ public:
     time::milliseconds dataSuppressionIntervalBegin = 1_ms;
     time::milliseconds dataSuppressionIntervalEnd = 5_ms;
     bool wantProbabilisticDataSuppression = false;
+    double dataDropProbability = 0.25;
     bool wantInterestSuppression = false;
   };
 

@@ -75,10 +75,11 @@ EthernetFactory::doProcessConfig(OptionalConfigSection configSection,
   UnicastConfig unicastConfig;
   MulticastConfig mcastConfig;
   mcastConfig.wantRandomBackoffDataSuppression = context.generalConfig.wantRandomBackoffDataSuppression;
-  mcastConfig.wantProbabilisticDataSuppression = context.generalConfig.wantProbabilisticDataSuppression;
-  mcastConfig.wantInterestSuppression = context.generalConfig.wantInterestSuppression;
   mcastConfig.backoffIntervalBegin = context.generalConfig.dataSuppressionIntervalBegin;
   mcastConfig.backoffIntervalEnd = context.generalConfig.dataSuppressionIntervalEnd;
+  mcastConfig.wantProbabilisticDataSuppression = context.generalConfig.wantProbabilisticDataSuppression;
+  mcastConfig.dataDropProbability = context.generalConfig.dataDropProbability;
+  mcastConfig.wantInterestSuppression = context.generalConfig.wantInterestSuppression;
 
   if (configSection) {
     // listen and mcast default to 'yes' but only if face_system.ether section is present
@@ -255,9 +256,10 @@ EthernetFactory::createMulticastFace(const ndn::net::NetworkInterface& netif,
   opts.allowFragmentation = true;
   opts.allowReassembly = true;
   opts.useRandomBackoffDataSuppression = m_mcastConfig.wantRandomBackoffDataSuppression;
-  opts.useProbabilisticDataSuppression = m_mcastConfig.wantProbabilisticDataSuppression;
-  opts.useInterestSuppression = m_mcastConfig.wantInterestSuppression;
   opts.dataSuppressionInterval = {m_mcastConfig.backoffIntervalBegin, m_mcastConfig.backoffIntervalEnd};
+  opts.useProbabilisticDataSuppression = m_mcastConfig.wantProbabilisticDataSuppression;
+  opts.dataSuppressionProbability = m_mcastConfig.dataDropProbability;
+  opts.useInterestSuppression = m_mcastConfig.wantInterestSuppression;
 
   auto linkService = make_unique<GenericLinkService>(opts);
   auto transport = make_unique<MulticastEthernetTransport>(netif, address, m_mcastConfig.linkType);

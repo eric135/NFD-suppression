@@ -119,10 +119,11 @@ private:
     ethernet::Address group = ethernet::getDefaultMulticastAddress();
     ndn::nfd::LinkType linkType = ndn::nfd::LINK_TYPE_MULTI_ACCESS;
     bool wantRandomBackoffDataSuppression = false;
-    bool wantProbabilisticDataSuppression = false;
-    bool wantInterestSuppression = false;
     time::milliseconds backoffIntervalBegin = 1_ms;
     time::milliseconds backoffIntervalEnd = 5_ms;
+    bool wantProbabilisticDataSuppression = false;
+    double dataDropProbability = 0.25;
+    bool wantInterestSuppression = false;
     NetworkInterfacePredicate netifPredicate;
   };
   MulticastConfig m_mcastConfig;
