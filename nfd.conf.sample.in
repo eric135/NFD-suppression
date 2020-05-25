@@ -88,6 +88,8 @@ face_system
     backoff_data_suppression no
     prob_data_suppression no
     interest_suppression no
+    backoff_interval_begin 1 ; milliseconds
+    backoff_interval_end 5 ; milliseconds
   }
 
   ; The unix section contains settings for Unix stream faces and channels.

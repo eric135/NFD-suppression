@@ -90,6 +90,8 @@ public:
   {
     bool wantCongestionMarking = true;
     bool wantRandomBackoffDataSuppression = false;
+    time::milliseconds dataSuppressionIntervalBegin = 1_ms;
+    time::milliseconds dataSuppressionIntervalEnd = 5_ms;
     bool wantProbabilisticDataSuppression = false;
     bool wantInterestSuppression = false;
   };

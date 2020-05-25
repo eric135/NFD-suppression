@@ -490,7 +490,7 @@ GenericLinkService::decodeData(const Block& netPkt, const lp::Packet& firstPkt,
 
   // Cancel any matching delayed Data packets
   if (m_delayedDataPackets.count(data->getName()) > 0) {
-    NFD_LOG_FACE_DEBUG("Cancelling delayed Data packet " << data->getName() <<
+    NFD_LOG_FACE_DEBUG("Canceling delayed Data packet " << data->getName() <<
                        " due to receipt of matching Data before timeout");
     m_delayedDataPackets.erase(data->getName());
   }

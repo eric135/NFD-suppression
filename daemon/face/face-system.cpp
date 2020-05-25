@@ -120,6 +120,14 @@ FaceSystem::processConfig(const ConfigSection& configSection, bool isDryRun, con
       else if (key == "interest_suppression") {
         context.generalConfig.wantInterestSuppression = ConfigFile::parseYesNo(pair, CFGSEC_GENERAL_FQ);
       }
+      else if (key == "backoff_interval_begin") {
+        context.generalConfig.dataSuppressionIntervalBegin =
+          time::milliseconds(ConfigFile::parseNumber<uint32_t>(pair, CFGSEC_GENERAL_FQ));
+      }
+      else if (key == "backoff_interval_end") {
+        context.generalConfig.dataSuppressionIntervalEnd =
+          time::milliseconds(ConfigFile::parseNumber<uint32_t>(pair, CFGSEC_GENERAL_FQ));
+      }
       else {
         NDN_THROW(ConfigFile::Error("Unrecognized option " + CFGSEC_GENERAL_FQ + "." + key));
       }

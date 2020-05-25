@@ -134,6 +134,8 @@ private:
     bool wantRandomBackoffDataSuppression = false;
     bool wantProbabilisticDataSuppression = false;
     bool wantInterestSuppression = false;
+    time::milliseconds backoffIntervalBegin = 1_ms;
+    time::milliseconds backoffIntervalEnd = 5_ms;
     NetworkInterfacePredicate netifPredicate;
   };
   MulticastConfig m_mcastConfig;
