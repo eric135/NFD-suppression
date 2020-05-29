@@ -99,7 +99,9 @@ void
 GenericLinkService::doSendInterest(const Interest& interest, const EndpointId& endpointId)
 {
 
-
+  //doSendInterest should, if interestSuppression is enabled, first check the Queue. 
+  //If it's in queue, don't send. 
+  //If it's not in queue, then do a delayed packet. 
   if(m_options.useInterestSuppression && getTransport() -> getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS){
     time::milliseconds backoffTime = time::milliseconds(
       (ndn::random::generateWord32() %
@@ -320,7 +322,11 @@ GenericLinkService::checkCongestionLevel(lp::Packet& pkt)
 void
 GenericLinkService::sendDelayedInterest(const Name& name){
   BOOST_ASSERT(m_delayedInterests.count(name) > 0);
-  NFD_LOG_FACE_DEBUG("Sending delayed interest packet " << name.toUri());
+  if(m_intQueue.find(name) != m_intQueue.end()){
+    return;
+  }
+
+  NFD_LOG_FACE_DEBUG("Sending delayed Interest packet " << name.toUri());
   
   const auto& intIt = m_delayedInterests.find(name);
   Interest intToSend = std::get<1>(intIt->second);
@@ -419,15 +425,22 @@ void
 GenericLinkService::decodeInterest(const Block& netPkt, const lp::Packet& firstPkt,
                                    const EndpointId& endpointId)
 {
-  //@Hunter: This is where we put look behind.
+  //@Hunter: This is where we 
   //Put incoming interests in a queue, check if interests are in flight before you send your own. 
+  //Implementing queue as a set. 
+  //TODO: Presently, whenever things get added to the queue, they never leave. Add the removal. 
 
   BOOST_ASSERT(netPkt.type() == tlv::Interest);
   BOOST_ASSERT(!firstPkt.has<lp::NackField>());
 
   // forwarding expects Interest to be created with make_shared
   auto interest = make_shared<Interest>(netPkt);
-
+  //If suppression is on
+  if (m_options.useInterestSuppression &&
+      getTransport()->getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS) {
+        m_intQueue.insert(interest.getName());
+      }
+  
   if (firstPkt.has<lp::NextHopFaceIdField>()) {
     if (m_options.allowLocalFields) {
       interest->setTag(make_shared<lp::NextHopFaceIdTag>(firstPkt.get<lp::NextHopFaceIdField>()));
