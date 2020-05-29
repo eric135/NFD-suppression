@@ -173,6 +173,10 @@ public:
     /** \brief enables Interest suppression
      */
     bool useInterestSuppression = false;
+
+    double intSuppressionProbability = 0.25;
+
+    bool useRandomBackoffInterestSuppression = true;
   };
 
   /** \brief counters provided by GenericLinkService
@@ -257,6 +261,9 @@ private: // send path
   void
   sendDelayedData(const Name& name);
 
+  void
+  sendDelayedInterest(const Name& name);
+
 private: // receive path
   /** \brief receive Packet from Transport
    */
@@ -327,6 +334,8 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   size_t m_nMarkedSinceInMarkingState;
   /// Contains packets delayed due to multiaccess link Data suppression
   std::map<Name, std::tuple<scheduler::ScopedEventId, Data, EndpointId>> m_delayedDataPackets;
+  //Contains interests delayed due to multiaccess link Interest suppression. 
+  std::map<Name, std::tuple<scheduler::ScopedEventId, Data, EndpointId>> m_delayedInterests;
   std::random_device m_rd;
   std::mt19937 m_gen;
 

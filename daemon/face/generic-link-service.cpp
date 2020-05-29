@@ -98,11 +98,35 @@ GenericLinkService::sendLpPacket(lp::Packet&& pkt, const EndpointId& endpointId)
 void
 GenericLinkService::doSendInterest(const Interest& interest, const EndpointId& endpointId)
 {
+
+  if (m_options.useProbabilisticInterestSuppression){
+    std::uniform_real_distribution<double> dis (0.0,1.0);
+    if(dis(m_gen) < m_options.interestSuppressionProability){
+      NFD_LOG_FACE_DEBUG("Prob dropping interest packet " << interest.getName().toUri());
+      return;
+    }
+  }
+
+  if(m_options.useRandomBackoffInterestSuppression && getTransport() -> getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS){
+    time::milliseconds backoffTime = time::milliseconds(
+      (ndn::random::generateWord32() %
+       (m_options.intSuppressionInterval.second - m_options.intSuppressionInterval.first).count())+m_options.intSuppressionInterval.first.count());
+    m_delayedInterests.emplace(std::piecewise_construct,
+                                 std::forward_as_tuple(interest.getName()),
+                                 std::forward_as_tuple(
+                                   getScheduler().schedule(backoffTime,
+                                                           std::bind(&GenericLinkService::sendDelayedInterest,
+                                                           this, interest.getName())), interest, endpointId));
+
+  }
+
+  
   lp::Packet lpPacket(interest.wireEncode());
 
   encodeLpFields(interest, lpPacket);
 
   this->sendNetPacket(std::move(lpPacket), endpointId, true);
+
 }
 
 void
@@ -301,6 +325,23 @@ GenericLinkService::checkCongestionLevel(lp::Packet& pkt)
 }
 
 void
+GenericLinkService::sendDelayedInterest(const Name& name){
+  BOOST_ASSERT(m_delayedInterests.count(name) > 0);
+  NFD_LOG_FACE_DEBUG("Sending delayed interest packet " << name.toUri());
+  
+  const auto& intIt = m_delayedInterests.find(name);
+  Interest intToSend = std::get<1>(intIt->second);
+  lp::Packet lpPacket(intToSend.wireEncode());
+
+  encodeLpFields(intToSend, lpPacket);
+
+  this->sendNetPacket(std::move(lpPacket), endpointId, true);
+
+
+
+}
+
+void
 GenericLinkService::sendDelayedData(const Name& name)
 {
   BOOST_ASSERT(m_delayedDataPackets.count(name) > 0);
@@ -385,6 +426,9 @@ void
 GenericLinkService::decodeInterest(const Block& netPkt, const lp::Packet& firstPkt,
                                    const EndpointId& endpointId)
 {
+  //@Hunter: This is where we put look behind.
+  //Put incoming interests in a queue, check if interests are in flight before you send your own. 
+
   BOOST_ASSERT(netPkt.type() == tlv::Interest);
   BOOST_ASSERT(!firstPkt.has<lp::NackField>());
 
