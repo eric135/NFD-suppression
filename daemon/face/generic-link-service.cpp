@@ -99,15 +99,8 @@ void
 GenericLinkService::doSendInterest(const Interest& interest, const EndpointId& endpointId)
 {
 
-  if (m_options.useProbabilisticInterestSuppression){
-    std::uniform_real_distribution<double> dis (0.0,1.0);
-    if(dis(m_gen) < m_options.interestSuppressionProability){
-      NFD_LOG_FACE_DEBUG("Prob dropping interest packet " << interest.getName().toUri());
-      return;
-    }
-  }
 
-  if(m_options.useRandomBackoffInterestSuppression && getTransport() -> getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS){
+  if(m_options.useInterestSuppression && getTransport() -> getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS){
     time::milliseconds backoffTime = time::milliseconds(
       (ndn::random::generateWord32() %
        (m_options.intSuppressionInterval.second - m_options.intSuppressionInterval.first).count())+m_options.intSuppressionInterval.first.count());
