@@ -95,6 +95,8 @@ UdpFactory::doProcessConfig(OptionalConfigSection configSection,
   mcastConfig.wantProbabilisticDataSuppression = context.generalConfig.wantProbabilisticDataSuppression;
   mcastConfig.dataDropProbability = context.generalConfig.dataDropProbability;
   mcastConfig.wantInterestSuppression = context.generalConfig.wantInterestSuppression;
+  mcastConfig.interestBackoffIntervalBegin = context.generalConfig.interestSuppressionIntervalBegin;
+  mcastConfig.interestBackoffIntervalEnd = context.generalConfig.interestSuppressionIntervalEnd;
 
   if (configSection) {
     // These default to 'yes' but only if face_system.udp section is present
@@ -365,6 +367,8 @@ UdpFactory::createMulticastFace(const shared_ptr<const net::NetworkInterface>& n
   options.useProbabilisticDataSuppression = m_mcastConfig.wantProbabilisticDataSuppression;
   options.dataSuppressionProbability = m_mcastConfig.dataDropProbability;
   options.useInterestSuppression = m_mcastConfig.wantInterestSuppression;
+  options.interestSuppressionInterval = {m_mcastConfig.interestBackoffIntervalBegin,
+                                         m_mcastConfig.interestBackoffIntervalEnd};
   auto linkService = make_unique<GenericLinkService>(options);
   auto transport = make_unique<MulticastUdpTransport>(mcastEp, std::move(rxSock), std::move(txSock),
                                                       m_mcastConfig.linkType);

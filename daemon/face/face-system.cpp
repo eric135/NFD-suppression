@@ -117,9 +117,6 @@ FaceSystem::processConfig(const ConfigSection& configSection, bool isDryRun, con
       else if (key == "prob_data_suppression") {
         context.generalConfig.wantProbabilisticDataSuppression = ConfigFile::parseYesNo(pair, CFGSEC_GENERAL_FQ);
       }
-      else if (key == "interest_suppression") {
-        context.generalConfig.wantInterestSuppression = ConfigFile::parseYesNo(pair, CFGSEC_GENERAL_FQ);
-      }
       else if (key == "backoff_interval_begin") {
         context.generalConfig.dataSuppressionIntervalBegin =
           time::milliseconds(ConfigFile::parseNumber<uint32_t>(pair, CFGSEC_GENERAL_FQ));
@@ -130,6 +127,17 @@ FaceSystem::processConfig(const ConfigSection& configSection, bool isDryRun, con
       }
       else if (key == "prob_drop_probability") {
         context.generalConfig.dataDropProbability = ConfigFile::parseNumber<double>(pair, CFGSEC_GENERAL_FQ);
+      }
+      else if (key == "interest_suppression") {
+        context.generalConfig.wantInterestSuppression = ConfigFile::parseYesNo(pair, CFGSEC_GENERAL_FQ);
+      }
+      else if (key == "interest_backoff_interval_begin") {
+        context.generalConfig.interestSuppressionIntervalBegin =
+          time::milliseconds(ConfigFile::parseNumber<uint32_t>(pair, CFGSEC_GENERAL_FQ));
+      }
+      else if (key == "interest_backoff_interval_end") {
+        context.generalConfig.interestSuppressionIntervalEnd =
+          time::milliseconds(ConfigFile::parseNumber<uint32_t>(pair, CFGSEC_GENERAL_FQ));
       }
       else {
         NDN_THROW(ConfigFile::Error("Unrecognized option " + CFGSEC_GENERAL_FQ + "." + key));

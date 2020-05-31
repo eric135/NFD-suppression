@@ -124,6 +124,8 @@ private:
     bool wantProbabilisticDataSuppression = false;
     double dataDropProbability = 0.25;
     bool wantInterestSuppression = false;
+    time::milliseconds interestBackoffIntervalBegin = 0_ms;
+    time::milliseconds interestBackoffIntervalEnd = 100_ms;
     NetworkInterfacePredicate netifPredicate;
   };
   MulticastConfig m_mcastConfig;

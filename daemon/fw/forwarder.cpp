@@ -235,7 +235,7 @@ Forwarder::onOutgoingInterest(const shared_ptr<pit::Entry>& pitEntry,
                               const FaceEndpoint& egress, const Interest& interest)
 {
   NFD_LOG_DEBUG("onOutgoingInterest out=" << egress << " interest=" << pitEntry->getName());
-  //Hunter: Check if in queue here. If so, drop it. 
+  //Hunter: Check if in queue here. If so, drop it.
   if(m_intQueue.find(interest.getName()) != m_intQueue.end()){
     return;
   }
@@ -417,7 +417,7 @@ Forwarder::onIncomingNack(const FaceEndpoint& ingress, const lp::Nack& nack)
   ++m_counters.nInNacks;
   //Hunter: Remove from queue here (NACK)
   if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_MULTI_ACCESS){
-    m_intQueue.erase(ingress.getName());
+    m_intQueue.erase(nack.getInterest().getName());
   }
 
   // if multi-access or ad hoc face, drop

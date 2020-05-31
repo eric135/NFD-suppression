@@ -174,6 +174,9 @@ public:
      */
     bool useInterestSuppression = false;
 
+    /** \brief interval for multi-access Interest suppression
+     */
+    std::pair<time::milliseconds, time::milliseconds> interestSuppressionInterval = {10_ms, 100_ms};
   };
 
   /** \brief counters provided by GenericLinkService
@@ -331,8 +334,8 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   size_t m_nMarkedSinceInMarkingState;
   /// Contains packets delayed due to multiaccess link Data suppression
   std::map<Name, std::tuple<scheduler::ScopedEventId, Data, EndpointId>> m_delayedDataPackets;
-  //Contains interests delayed due to multiaccess link Interest suppression. 
-  std::map<Name, std::tuple<scheduler::ScopedEventId, Data, EndpointId>> m_delayedInterests;
+  //Contains interests delayed due to multiaccess link Interest suppression.
+  std::map<Name, std::tuple<scheduler::ScopedEventId, Interest, EndpointId>> m_delayedInterests;
   std::random_device m_rd;
   std::mt19937 m_gen;
 

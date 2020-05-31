@@ -95,6 +95,8 @@ public:
     bool wantProbabilisticDataSuppression = false;
     double dataDropProbability = 0.25;
     bool wantInterestSuppression = false;
+    time::milliseconds interestSuppressionIntervalBegin = 1_ms;
+    time::milliseconds interestSuppressionIntervalEnd = 5_ms;
   };
 
   /** \brief context for processing a config section in ProtocolFactory
