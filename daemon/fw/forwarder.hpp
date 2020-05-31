@@ -259,6 +259,7 @@ PROTECTED_WITH_TESTS_ELSE_PRIVATE:
   }
 
 private:
+  std::set<Name> m_intQueue;
   ForwarderCounters m_counters;
 
   FaceTable& m_faceTable;

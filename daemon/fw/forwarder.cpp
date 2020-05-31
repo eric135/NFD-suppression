@@ -87,6 +87,10 @@ Forwarder::~Forwarder() = default;
 void
 Forwarder::onIncomingInterest(const FaceEndpoint& ingress, const Interest& interest)
 {
+  //Hunter: Add to set here
+  if (ingress.face.getLinkType() != ndn::nfd::LINK_TYPE_MULTI_ACCESS){
+    m_intQueue.insert(interest.getName());
+  }
   // receive Interest
   NFD_LOG_DEBUG("onIncomingInterest in=" << ingress << " interest=" << interest.getName());
   interest.setTag(make_shared<lp::IncomingFaceIdTag>(ingress.face.getId()));
@@ -231,7 +235,10 @@ Forwarder::onOutgoingInterest(const shared_ptr<pit::Entry>& pitEntry,
                               const FaceEndpoint& egress, const Interest& interest)
 {
   NFD_LOG_DEBUG("onOutgoingInterest out=" << egress << " interest=" << pitEntry->getName());
-
+  //Hunter: Check if in queue here. 
+  if(m_intQueue.find(interest.getName()) != m_intQueue.end()){
+    return;
+  }
   // insert out-record
   pitEntry->insertOrUpdateOutRecord(egress.face, interest);
 
@@ -241,11 +248,14 @@ Forwarder::onOutgoingInterest(const shared_ptr<pit::Entry>& pitEntry,
 }
 
 void
-Forwarder::onInterestFinalize(const shared_ptr<pit::Entry>& pitEntry)
+Forwarder:onInterestFinalize(const shared_ptr<pit::Entry>& pitEntry)
 {
   NFD_LOG_DEBUG("onInterestFinalize interest=" << pitEntry->getName()
                 << (pitEntry->isSatisfied ? " satisfied" : " unsatisfied"));
-
+  //Hunter: Remove from the set if it's in there. 
+  if(m_intQueue.find(pitEntry->getName()) != m_intQueue.end()){
+    m_intQueue.erase(pitEntry->getName());
+  }
   // Dead Nonce List insert if necessary
   this->insertDeadNonceList(*pitEntry, nullptr);
 
@@ -405,6 +415,10 @@ Forwarder::onIncomingNack(const FaceEndpoint& ingress, const lp::Nack& nack)
   // receive Nack
   nack.setTag(make_shared<lp::IncomingFaceIdTag>(ingress.face.getId()));
   ++m_counters.nInNacks;
+  //Hunter: Remove from queue here
+  if (ingress.face.getLinkType() != ndn::nfd::LINK_TYPE_MULTI_ACCESS){
+    m_intQueue.erase(interest.getName());
+  }
 
   // if multi-access or ad hoc face, drop
   if (ingress.face.getLinkType() != ndn::nfd::LINK_TYPE_POINT_TO_POINT) {

@@ -322,9 +322,7 @@ GenericLinkService::checkCongestionLevel(lp::Packet& pkt)
 void
 GenericLinkService::sendDelayedInterest(const Name& name){
   BOOST_ASSERT(m_delayedInterests.count(name) > 0);
-  if(m_intQueue.find(name) != m_intQueue.end()){
-    return;
-  }
+
 
   NFD_LOG_FACE_DEBUG("Sending delayed Interest packet " << name.toUri());
   
@@ -436,10 +434,6 @@ GenericLinkService::decodeInterest(const Block& netPkt, const lp::Packet& firstP
   // forwarding expects Interest to be created with make_shared
   auto interest = make_shared<Interest>(netPkt);
   //If suppression is on
-  if (m_options.useInterestSuppression &&
-      getTransport()->getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS) {
-        m_intQueue.insert(interest.getName());
-      }
   
   if (firstPkt.has<lp::NextHopFaceIdField>()) {
     if (m_options.allowLocalFields) {
