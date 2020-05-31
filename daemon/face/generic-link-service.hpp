@@ -335,7 +335,7 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   std::map<Name, std::tuple<scheduler::ScopedEventId, Data, EndpointId>> m_delayedInterests;
   std::random_device m_rd;
   std::mt19937 m_gen;
-  std::set<Name> m_intQueue;
+
 
   friend class LpReliability;
 };

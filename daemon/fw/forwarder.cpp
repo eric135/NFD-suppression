@@ -417,7 +417,7 @@ Forwarder::onIncomingNack(const FaceEndpoint& ingress, const lp::Nack& nack)
   ++m_counters.nInNacks;
   //Hunter: Remove from queue here (NACK)
   if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_MULTI_ACCESS){
-    m_intQueue.erase(interest.getName());
+    m_intQueue.erase(ingress.getName());
   }
 
   // if multi-access or ad hoc face, drop
