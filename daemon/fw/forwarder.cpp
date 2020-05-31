@@ -87,16 +87,16 @@ Forwarder::~Forwarder() = default;
 void
 Forwarder::onIncomingInterest(const FaceEndpoint& ingress, const Interest& interest)
 {
-  //Hunter: Add to set here if the link is multi access.
-  if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_MULTI_ACCESS &&
-      ingress.face.getScope() == ndn::nfd::FACE_SCOPE_NON_LOCAL) {
-    NFD_LOG_DEBUG("[SUPPRESS] Interest added to the set " << interest.getName().toUri());
-    m_intQueue.insert(interest.getName());
-  }
   // receive Interest
   NFD_LOG_DEBUG("onIncomingInterest in=" << ingress << " interest=" << interest.getName());
   interest.setTag(make_shared<lp::IncomingFaceIdTag>(ingress.face.getId()));
   ++m_counters.nInInterests;
+
+  //Hunter: Add to set here if the link is multi access.
+  if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_MULTI_ACCESS) {
+    NFD_LOG_DEBUG("[SUPPRESS] Interest added to the set " << interest.getName().toUri());
+    m_intQueue.insert(interest.getName());
+  }
 
   // /localhost scope control
   bool isViolatingLocalhost = ingress.face.getScope() == ndn::nfd::FACE_SCOPE_NON_LOCAL &&
@@ -137,6 +137,13 @@ Forwarder::onIncomingInterest(const FaceEndpoint& ingress, const Interest& inter
   if (hasDuplicateNonceInPit) {
     // goto Interest loop pipeline
     this->onInterestLoop(ingress, interest);
+    return;
+  }
+
+  // Hunter: Check if in queue here. If so, drop it.
+  if (ingress.face.getScope() == ndn::nfd::FACE_SCOPE_LOCAL &&
+      m_intQueue.find(interest.getName()) != m_intQueue.end()) {
+    NFD_LOG_DEBUG("[SUPPRESS] Interest suppressed by look-behind policy " << interest.getName().toUri());
     return;
   }
 
@@ -237,12 +244,7 @@ Forwarder::onOutgoingInterest(const shared_ptr<pit::Entry>& pitEntry,
                               const FaceEndpoint& egress, const Interest& interest)
 {
   NFD_LOG_DEBUG("onOutgoingInterest out=" << egress << " interest=" << pitEntry->getName());
-  // Hunter: Check if in queue here. If so, drop it.
-  if (egress.face.getScope() == ndn::nfd::FACE_SCOPE_NON_LOCAL &&
-      m_intQueue.find(interest.getName()) != m_intQueue.end()) {
-    NFD_LOG_DEBUG("[SUPPRESS] Interest dropped due to suppression look-behind policy " << interest.getName().toUri());
-    return;
-  }
+
   // insert out-record
   pitEntry->insertOrUpdateOutRecord(egress.face, interest);
 
