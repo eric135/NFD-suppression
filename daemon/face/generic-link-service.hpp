@@ -332,13 +332,12 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   time::steady_clock::TimePoint m_nextMarkTime;
   /// number of marked packets in the current incident of congestion
   size_t m_nMarkedSinceInMarkingState;
-  /// Contains packets delayed due to multiaccess link Data suppression
+  /// Contains Data packets delayed due to multiaccess link Data suppression
   std::map<Name, std::tuple<scheduler::ScopedEventId, Data, EndpointId>> m_delayedDataPackets;
-  //Contains interests delayed due to multiaccess link Interest suppression.
+  /// Contains Interests delayed due to multiaccess link Interest suppression.
   std::map<Name, std::tuple<scheduler::ScopedEventId, Interest, EndpointId>> m_delayedInterests;
   std::random_device m_rd;
   std::mt19937 m_gen;
-
 
   friend class LpReliability;
 };

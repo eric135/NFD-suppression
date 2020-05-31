@@ -98,29 +98,32 @@ GenericLinkService::sendLpPacket(lp::Packet&& pkt, const EndpointId& endpointId)
 void
 GenericLinkService::doSendInterest(const Interest& interest, const EndpointId& endpointId)
 {
-
-  //doSendInterest should, if interestSuppression is enabled, first check the Queue.
-  //If it's in queue, don't send.
-  //If it's not in queue, then do a delayed packet.
-  if (m_options.useInterestSuppression && getTransport() -> getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS) {
+  // doSendInterest should, if interestSuppression is enabled, first check the Queue.
+  // If it's in queue, don't send.
+  // If it's not in queue, then do a delayed packet.
+  if (m_options.useInterestSuppression &&
+      getTransport()->getLinkType() == ndn::nfd::LinkType::LINK_TYPE_MULTI_ACCESS) {
     time::milliseconds backoffTime = time::milliseconds(
       (ndn::random::generateWord32() %
        (m_options.interestSuppressionInterval.second -
         m_options.interestSuppressionInterval.first).count()) +
       m_options.interestSuppressionInterval.first.count());
-    m_delayedInterests.emplace(std::piecewise_construct,
-                               std::forward_as_tuple(interest.getName()),
-                               std::forward_as_tuple(getScheduler().schedule(backoffTime,
-                                                      std::bind(&GenericLinkService::sendDelayedInterest, this,
-                                                                interest.getName())), interest, endpointId));
+    if (m_delayedInterests.count(interest.getName()) == 0) {
+      m_delayedInterests.emplace(std::piecewise_construct,
+                                std::forward_as_tuple(interest.getName()),
+                                std::forward_as_tuple(getScheduler().schedule(backoffTime,
+                                                        std::bind(&GenericLinkService::sendDelayedInterest, this,
+                                                                  interest.getName())), interest, endpointId));
+      NFD_LOG_FACE_DEBUG("[SUPPRESS] Delaying Interest " << interest.getName() << " for " << backoffTime);
+    }
   }
+  else {
+    lp::Packet lpPacket(interest.wireEncode());
 
-  lp::Packet lpPacket(interest.wireEncode());
+    encodeLpFields(interest, lpPacket);
 
-  encodeLpFields(interest, lpPacket);
-
-  this->sendNetPacket(std::move(lpPacket), endpointId, true);
-
+    this->sendNetPacket(std::move(lpPacket), endpointId, true);
+  }
 }
 
 void
@@ -322,15 +325,15 @@ void
 GenericLinkService::sendDelayedInterest(const Name& name)
 {
   BOOST_ASSERT(m_delayedInterests.count(name) > 0);
-  NFD_LOG_FACE_DEBUG("Sending delayed Interest packet " << name.toUri());
+
+  NFD_LOG_FACE_DEBUG("[SUPPRESS] Sending delayed Interest packet " << name.toUri());
+
   const auto& intIt = m_delayedInterests.find(name);
-  Interest intToSend = std::get<1>(intIt->second);
-
-  lp::Packet lpPacket(intToSend.wireEncode());
-
-  encodeLpFields(intToSend, lpPacket);
-
+  lp::Packet lpPacket(std::get<1>(intIt->second).wireEncode());
+  encodeLpFields(std::get<1>(intIt->second), lpPacket);
   this->sendNetPacket(std::move(lpPacket), std::get<2>(intIt->second), true);
+
+  m_delayedInterests.erase(intIt);
 }
 
 void
@@ -418,17 +421,11 @@ void
 GenericLinkService::decodeInterest(const Block& netPkt, const lp::Packet& firstPkt,
                                    const EndpointId& endpointId)
 {
-  //@Hunter: This is where we
-  //Put incoming interests in a queue, check if interests are in flight before you send your own.
-  //Implementing queue as a set.
-  //TODO: Presently, whenever things get added to the queue, they never leave. Add the removal.
-
   BOOST_ASSERT(netPkt.type() == tlv::Interest);
   BOOST_ASSERT(!firstPkt.has<lp::NackField>());
 
   // forwarding expects Interest to be created with make_shared
   auto interest = make_shared<Interest>(netPkt);
-  //If suppression is on
 
   if (firstPkt.has<lp::NextHopFaceIdField>()) {
     if (m_options.allowLocalFields) {
@@ -471,6 +468,13 @@ GenericLinkService::decodeInterest(const Block& netPkt, const lp::Packet& firstP
 
   if (firstPkt.has<lp::PitTokenField>()) {
     interest->setTag(make_shared<lp::PitToken>(firstPkt.get<lp::PitTokenField>()));
+  }
+
+  // Cancel any matching delayed Interests
+  if (m_delayedInterests.count(interest->getName()) > 0) {
+    NFD_LOG_FACE_DEBUG("[SUPPRESS] Canceling delayed Interest " << interest->getName() <<
+                       " due to receipt of matching Interest before timeout");
+    m_delayedInterests.erase(interest->getName());
   }
 
   this->receiveInterest(*interest, endpointId);
