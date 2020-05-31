@@ -152,7 +152,8 @@ GenericLinkService::doSendData(const Data& data, const EndpointId& endpointId)
                                                            this, data.getName())),
                                    data,
                                    endpointId));
-    NFD_LOG_FACE_DEBUG("Delaying Data packet " << data.getName() << " by " << backoffTime << " ms");
+    NFD_LOG_FACE_DEBUG("[SUPPRESS] Delaying Data packet " << data.getName() << " by " <<
+                       backoffTime << " ms");
     return;
   }
 
@@ -341,7 +342,7 @@ GenericLinkService::sendDelayedData(const Name& name)
 {
   BOOST_ASSERT(m_delayedDataPackets.count(name) > 0);
 
-  NFD_LOG_FACE_DEBUG("Sending delayed Data packet " << name);
+  NFD_LOG_FACE_DEBUG("[SUPPRESS] Sending delayed Data packet " << name);
 
   // Extract and send Data packet
   const auto& dataIt = m_delayedDataPackets.find(name);
@@ -533,7 +534,7 @@ GenericLinkService::decodeData(const Block& netPkt, const lp::Packet& firstPkt,
 
   // Cancel any matching delayed Data packets
   if (m_delayedDataPackets.count(data->getName()) > 0) {
-    NFD_LOG_FACE_DEBUG("Canceling delayed Data packet " << data->getName() <<
+    NFD_LOG_FACE_DEBUG("[SUPPRESS] Canceling delayed Data packet " << data->getName() <<
                        " due to receipt of matching Data before timeout");
     m_delayedDataPackets.erase(data->getName());
   }
