@@ -89,6 +89,7 @@ Forwarder::onIncomingInterest(const FaceEndpoint& ingress, const Interest& inter
 {
   //Hunter: Add to set here if the link is multi access.
   if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_MULTI_ACCESS){
+    NFD_LOG_DEBUG("Interest added to the set " << interest.getName().toUri());
     m_intQueue.insert(interest.getName());
   }
   // receive Interest
@@ -237,6 +238,7 @@ Forwarder::onOutgoingInterest(const shared_ptr<pit::Entry>& pitEntry,
   NFD_LOG_DEBUG("onOutgoingInterest out=" << egress << " interest=" << pitEntry->getName());
   //Hunter: Check if in queue here. If so, drop it.
   if(m_intQueue.find(interest.getName()) != m_intQueue.end()){
+    NFD_LOG_DEBUG("Interest dropped due to suppression look-behind policy " << interest.getName().toUri());
     return;
   }
   // insert out-record
@@ -254,6 +256,7 @@ Forwarder::onInterestFinalize(const shared_ptr<pit::Entry>& pitEntry)
                 << (pitEntry->isSatisfied ? " satisfied" : " unsatisfied"));
   //Hunter: Remove from the set if the interest either timed out or was satisfied.
   if(m_intQueue.find(pitEntry->getName()) != m_intQueue.end()){
+    NFD_LOG_DEBUG("Interest either timed out or satisfied, removed from set: " << pitEntry->getName().toUri());
     m_intQueue.erase(pitEntry->getName());
   }
   // Dead Nonce List insert if necessary
@@ -417,6 +420,7 @@ Forwarder::onIncomingNack(const FaceEndpoint& ingress, const lp::Nack& nack)
   ++m_counters.nInNacks;
   //Hunter: Remove from queue here (NACK)
   if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_MULTI_ACCESS){
+    NFD_LOG_DEBUG("Interest NACK'd, removed from set: " << nack.getInterest().getName().toUri());
     m_intQueue.erase(nack.getInterest().getName());
   }
 
