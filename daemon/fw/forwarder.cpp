@@ -88,7 +88,7 @@ void
 Forwarder::onIncomingInterest(const FaceEndpoint& ingress, const Interest& interest)
 {
   //Hunter: Add to set here if the link is multi access.
-  if (ingress.face.getLinkType() != ndn::nfd::LINK_TYPE_MULTI_ACCESS){
+  if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_MULTI_ACCESS){
     m_intQueue.insert(interest.getName());
   }
   // receive Interest
@@ -248,7 +248,7 @@ Forwarder::onOutgoingInterest(const shared_ptr<pit::Entry>& pitEntry,
 }
 
 void
-Forwarder:onInterestFinalize(const shared_ptr<pit::Entry>& pitEntry)
+Forwarder::onInterestFinalize(const shared_ptr<pit::Entry>& pitEntry)
 {
   NFD_LOG_DEBUG("onInterestFinalize interest=" << pitEntry->getName()
                 << (pitEntry->isSatisfied ? " satisfied" : " unsatisfied"));
@@ -416,7 +416,7 @@ Forwarder::onIncomingNack(const FaceEndpoint& ingress, const lp::Nack& nack)
   nack.setTag(make_shared<lp::IncomingFaceIdTag>(ingress.face.getId()));
   ++m_counters.nInNacks;
   //Hunter: Remove from queue here (NACK)
-  if (ingress.face.getLinkType() != ndn::nfd::LINK_TYPE_MULTI_ACCESS){
+  if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_MULTI_ACCESS){
     m_intQueue.erase(interest.getName());
   }
 
